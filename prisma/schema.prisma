@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  //Yeni user oluşturulunca otomatik UUID üret,UUID = Unique Universal Identifier
+  id             String   @unique @default(uuid())
+  email          String   @unique
+  hashedPassword String
+  createdAt      DateTime @default(now())
+  //@updatedAt=Bu alan her update olduğunda otomatik değişsin 
+  updateAt       DateTime @updatedAt()
+}
