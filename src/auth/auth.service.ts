@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import * as bctypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { jwtSecret } from '../utils/constants';
+import type { Request, Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +38,7 @@ export class AuthService {
 
     return { message: 'signup was succesfull' };
   }
-  async signin(dto: AuthDto) {
+  async signin(dto: AuthDto, req: Request, res: Response) {
     const { email, password } = dto;
 
     const foundUser = await this.prisma.user.findUnique({ where: { email } });
@@ -59,10 +64,20 @@ export class AuthService {
       email: foundUser.email,
     });
 
-    return { token };
+    if (!token) {
+      throw new ForbiddenException('Could not signin');
+    }
+
+    //kullanıcı login olduktan sonra ona bir jwt token ürettin ve bu token'ı cookie içine yazıyorsun
+    //bu tokenı cookie'ye koy sonra da başarı mesajı dön
+    //token adlı cookie oluştur ve içine bu değeri koy.
+    res.cookie('token', token);
+
+    return res.send({ message: 'Logged in succesfully' });
   }
-  async signout() {
-    return '';
+  async signout(req: Request, res: Response) {
+    res.clearCookie('token');
+    return res.send({ message: 'Logged out succesfully' });
   }
   //kullanıcıdan gelen password alınır
   async hashPassword(password: string) {
